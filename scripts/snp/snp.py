@@ -77,16 +77,16 @@ def snpOutput(bamfile, genomeFile, coverage=5,majorAlleleFreq=0.9,buffer=0.1):
         for pileupRead in col.pileups:
             if not pileupRead.is_del:
                 isReverse = pileupRead.alignment.is_reverse
-                base = pileupRead.alignment.seq[pileupRead.qpos]
+                base = pileupRead.alignment.seq[pileupRead.query_position]
                 baseList += [(base, isReverse)]
         (aCount,tCount,cCount,gCount,total,posCov,negCov) = alleleCount(baseList,refNuc)
         if total >= coverage:
             (freqList,freqDict,allele1,allele2,snpType) = snpDetermine(aCount,tCount,cCount,gCount,total,refNuc,majorAlleleFreq,buffer)
             eachLine = (('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n')%(chr,refNuc,pos,allele1,allele2,snpType,total,posCov,negCov,('\t'.join(map(str,(freqDict[base] for base in ['A','T','C','G']))))))
             if snpType == 'het':
-			    hetFile.write(eachLine)
+                hetFile.write(eachLine)
             elif snpType == 'homo':
-				homFile.write(eachLine)	
+                homFile.write(eachLine)	
     homFile.close()
     hetFile.close()
 

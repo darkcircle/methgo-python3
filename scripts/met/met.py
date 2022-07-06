@@ -3,7 +3,8 @@ from __future__ import division
 import os
 import re
 import argparse
-from itertools import izip, compress
+# from itertools import izip, compress
+from itertools import compress
 from collections import defaultdict
 import numpy as np
 import pandas as pd
@@ -90,7 +91,7 @@ def const_cgmap(ctxstr, cgmapfile, readdepth=4):
     cgmap = {}
     with open(cgmapfile) as infile:
         for chr in ctxstr.keys():
-            cgmap[chr] = ['-' for _ in xrange(len(ctxstr[chr]))]
+            cgmap[chr] = ['-' for _ in range(len(ctxstr[chr]))]
         for line in infile:
             line = line.strip().split()
             chr = line[0]
@@ -109,7 +110,7 @@ def calc_bulk(ctxstr, cgmap):
     inv_ctxs = {'X': 'CG', 'Y': 'CHG', 'Z': 'CHH'}
     bulk = defaultdict(list)
     for chr in set(ctxstr) & set(cgmap):
-        for tag, mlevel in izip(ctxstr[chr], cgmap[chr]):
+        for tag, mlevel in zip(ctxstr[chr], cgmap[chr]):
             tag = tag.upper()
             if tag in inv_ctxs and mlevel != '-':
                 bulk[inv_ctxs[tag]].append(mlevel)
@@ -131,16 +132,16 @@ def calc_mlevel(ctxstr, cgmap, gtftree, pmtsize=1000):
             gend = max(gtftree[chr][(gene_id, strand)])[1]
             mask[gstart:gend] = [0]*(gend - gstart)
             if strand == '+':
-                for (pos, (tag, mlevel)) in enumerate(izip(ctxstr[chr][gstart-pmtsize:gstart], cgmap[chr][gstart-pmtsize:gstart])):
+                for (pos, (tag, mlevel)) in enumerate(zip(ctxstr[chr][gstart-pmtsize:gstart], cgmap[chr][gstart-pmtsize:gstart])):
                     tag = tag.upper()
                     if tag in inv_ctxs and mlevel != '-':
                         feature_mlevels[inv_ctxs[tag]]['pmt'].append(mlevel)
             elif strand == '-':
-                for (pos, (tag, mlevel)) in enumerate(izip(ctxstr[chr][gend:gend+pmtsize], cgmap[chr][gend:gend+pmtsize])):
+                for (pos, (tag, mlevel)) in enumerate(zip(ctxstr[chr][gend:gend+pmtsize], cgmap[chr][gend:gend+pmtsize])):
                     tag = tag.upper()
                     if tag in inv_ctxs and mlevel != '-':
                         feature_mlevels[inv_ctxs[tag]]['pmt'].append(mlevel)
-            for (pos, (tag, mlevel)) in enumerate(izip(ctxstr[chr][gstart:gend], cgmap[chr][gstart:gend])):
+            for (pos, (tag, mlevel)) in enumerate(zip(ctxstr[chr][gstart:gend], cgmap[chr][gstart:gend])):
                 tag = tag.upper()
                 inexon = False
                 if tag in inv_ctxs and mlevel != '-':
@@ -160,7 +161,7 @@ def calc_mlevel(ctxstr, cgmap, gtftree, pmtsize=1000):
                     else:
                         counter[ctx][feature] += 0
                         mtable[ctx][gene_id][feature] = 0.0
-        for (pos, (tag, mlevel)) in enumerate(izip(ctxstr[chr], cgmap[chr])):
+        for (pos, (tag, mlevel)) in enumerate(zip(ctxstr[chr], cgmap[chr])):
             tag = tag.upper()
             if (tag in inv_ctxs) and (mask[pos] == 1) and (mlevel != '-'):
                 ign[inv_ctxs[tag]].append(mlevel)
@@ -205,19 +206,19 @@ def plot_bar(dataframe, bulk, ctx):
 
 def plot_feature_mlevel(bulk, ign, cg_table, chg_table, chh_table):
     cg = cg_table.mean()
-    cg = cg.set_value('genome', np.mean(bulk['CG']))
-    cg = cg.set_value('IGN', ign['CG'])
+    cg.at['genome'] = np.mean(bulk['CG'])
+    cg.at['IGN'] = ign['CG']
     cg = cg[['genome', 'pmt', 'gene', 'exon', 'intron', 'IGN']]
     cg.to_csv("CG.txt", sep="\t")
     cg_ax = plot_bar(cg, bulk, 'CG')
     chg = chg_table.mean()
-    chg = chg.set_value('genome', np.mean(bulk['CHG']))
-    chg = chg.set_value('IGN', ign['CHG'])
+    chg.at['genome'] = np.mean(bulk['CHG'])
+    chg.at['IGN'] = ign['CHG']
     chg = chg[['genome', 'pmt', 'gene', 'exon', 'intron', 'IGN']]
     chg_ax = plot_bar(chg, bulk, 'CHG')
     chh = chh_table.mean()
-    chh = chh.set_value('genome', np.mean(bulk['CHH']))
-    chh = chh.set_value('IGN', ign['CHH'])
+    chh.at['genome'] = np.mean(bulk['CHH'])
+    chh.at['IGN'] = ign['CHH']
     chh = chh[['genome', 'pmt', 'gene', 'exon', 'intron', 'IGN']]
     chh_ax = plot_bar(chh, bulk, 'CHH')
     return cg_ax, chg_ax, chh_ax
@@ -336,7 +337,9 @@ def calc_genomewide(ctxstr, cgmap, winsize=200000):
     win_x = []
     pos = 0
     chrs = ctxstr.keys()
-    chrs.sort(cmp=alphanum)
+    # chrs.sort(cmp=alphanum)
+    chrs = list(chrs)
+    chrs.sort()
     """
     if 'chr' in ctxstr.keys()[0].lower():
         chrs = sorted(ctxstr.keys(), key=lambda s: s[3:])
@@ -348,7 +351,7 @@ def calc_genomewide(ctxstr, cgmap, winsize=200000):
         while (start + winsize) <= len(ctxstr[chr]):
             win_x.append(pos+(winsize/2))
             tmp = defaultdict(list)
-            for tag, mlevel in izip(ctxstr[chr][start:start+winsize], cgmap[chr][start:start+winsize]):
+            for tag, mlevel in zip(ctxstr[chr][start:start+winsize], cgmap[chr][start:start+winsize]):
                 tag = tag.upper()
                 if tag in inv_ctxs and mlevel != '-':
                     tmp[inv_ctxs[tag]].append(mlevel)
@@ -363,7 +366,9 @@ def plot_genomewide(ctxstr, gpos, gmlevel):
               'CHG': ( 44/255, 180/255, 234/255),
               'CHH': (249/255,  42/255,  54/255)}
     chrs = ctxstr.keys()
-    chrs.sort(cmp=alphanum)
+    # chrs.sort(cmp=alphanum)
+    chrs = list(chrs)
+    chrs.sort()
     """
     if 'chr' in ctxstr.keys()[0].lower():
         chrs = sorted(ctxstr.keys(), key=lambda s: s[3:])
@@ -394,13 +399,18 @@ def plot_genomewide(ctxstr, gpos, gmlevel):
     for label in ax.yaxis.get_ticklabels():
         label.set_fontweight('bold')
     ax.tick_params(direction='out', length=6, width=2, labelsize='large', top='off', right='off', bottom='off')
-    ax.set_xticks([(vlines[i] + vlines[i+1])/2 for i in xrange(len(vlines) - 1)])
+    ax.set_xticks([(vlines[i] + vlines[i+1])/2 for i in range(len(vlines) - 1)])
     ax.set_xticklabels(chrs)
     ax.set_xlabel('Chromosome', fontsize='xx-large', fontweight='bold')
     ax.set_ylabel('Methylation Level (%)', fontsize='xx-large', fontweight='bold')
     ax.legend(loc='upper right', fontsize='large', frameon=False)
     fig.tight_layout()
     return ax
+
+
+def cmp(a, b):
+    return (a > b) - (a < b)
+
 
 def main():
     parser = get_parser()
@@ -437,6 +447,7 @@ def main():
     fig = gax.get_figure()
     fig.savefig('{}.genomewide.png'.format(root), dpi=300)
     plt.close(fig)
+
 
 if __name__ == '__main__':
     main()

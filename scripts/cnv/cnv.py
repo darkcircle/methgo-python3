@@ -69,7 +69,7 @@ def main():
 
     shuffle_cov = []
     sample_size = 100
-    for _ in xrange(sample_size):
+    for _ in range(sample_size):
         temp = copy.copy(win_cov)
         random.shuffle(temp)
         shuffle_cov.append(temp)
@@ -101,7 +101,7 @@ def main():
                     cnv_cand.extend(temp)
                 temp = []
         prev = next
-    data = data.ix[pd.MultiIndex.from_tuples(cnv_cand, names=['chr', 'start', 'end'])]
+    data = data.loc[pd.MultiIndex.from_tuples(cnv_cand, names=['chr', 'start', 'end'])]
     root = os.path.splitext(os.path.basename(args.bamfile))[0]
     data.to_csv('{}.cnv.txt'.format(root), sep='\t')
 
@@ -125,13 +125,14 @@ def main():
     for label in ax.yaxis.get_ticklabels():
         label.set_fontweight('bold')
     ax.tick_params(direction='out', length=6, width=2, labelsize='large', top='off', right='off', bottom='off')
-    ax.set_xticks([(vlines[i] + vlines[i+1])/2 for i in xrange(len(vlines) - 1)])
+    ax.set_xticks([(vlines[i] + vlines[i+1])/2 for i in range(len(vlines) - 1)])
     ax.set_xticklabels([extract_chrnum(chr) for chr in chrs], fontsize='large', fontweight='bold')
     #ax.set_xlabel('Chromosome', fontsize='xx-large', fontweight='bold')
     ax.set_ylabel('Coverage (base)', fontsize='large', fontweight='bold')
     fig.tight_layout()
     plt.savefig('{}.cnv.png'.format(root), dpi=300)
     plt.close(fig)
+
 
 if __name__ == '__main__':
     main()
